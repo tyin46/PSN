@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+.env
+models/
+app_old.py
+app_old_1.py

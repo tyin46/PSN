@@ -1,0 +1,16 @@
+# -------- core GUI --------
+customtkinter==5.2.0           # modern Tk themed widgets (light/dark)
+
+# -------- LLM / LangChain stack --------
+langchain-community==0.2.1     # ChatLlamaCpp lives here
+langchain-core==0.1.7          # pulled automatically, pinned for reproducibility
+llama-cpp-python==0.2.62       # GGUF loader / local inference
+
+# -------- model-download convenience (optional but handy) --------
+huggingface-hub==0.24.3        # hf_hub_download / CLI “huggingface-cli”
+
+# -------- tokenizer helper (pulled by LangChain, pinned here) --------
+tiktoken==0.7.0                # OpenAI-style BPE tokenizer used by many GGUF builds
+
+# -------- runtime typing (dependency of langchain-core) --------
+pydantic==2.10.4               # data validation
