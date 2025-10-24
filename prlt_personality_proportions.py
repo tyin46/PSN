@@ -222,6 +222,105 @@ class PRLTSimulator:
 
         return result, trial_history
 
+    def run_with_callback(self, progress_cb=None, pre_reversal_trials: int = 200, max_post: int = 1000) -> Tuple[PRLTResult, List[Dict]]:
+        """Run the PRLT but call progress_cb after each trial with a status dict.
+
+        progress_cb(status_dict) where status_dict includes:
+          phase: 'pre'|'post'
+          t: trial index within phase
+          global_t: absolute trial index
+          choice, reward, QA, QB
+          pre_converged (bool), post_converged (bool)
+        """
+        # Task probabilities
+        pA = 0.75
+        pB = 0.25
+
+        QA, QB = 0.5, 0.5
+        prev_choice = None
+        trial_history = []
+
+        def check_convergence(history, correct_option, window=20, threshold=0.9):
+            if len(history) < window:
+                return False
+            recent = history[-window:]
+            picks = sum(1 for t in recent if t['choice'] == correct_option)
+            return (picks / window) >= threshold
+
+        pre_converge_trial = None
+        max_pre = pre_reversal_trials
+        global_t = 0
+        # Pre-reversal
+        for t in range(1, max_pre + 1):
+            global_t += 1
+            choice = self.choose(QA, QB, prev_choice)
+            reward = 1 if self.rng.random() < (pA if choice == 'A' else pB) else 0
+            QA, QB = self.update(QA, QB, choice, reward)
+            prev_choice = choice
+            trial_history.append({'phase':'pre', 'trial': t, 'choice': choice, 'reward': reward, 'QA': QA, 'QB': QB})
+            pre_converged = check_convergence(trial_history, 'A', window=self.patience, threshold=0.9)
+
+            status = {
+                'phase': 'pre', 't': t, 'global_t': global_t,
+                'choice': choice, 'reward': reward, 'QA': QA, 'QB': QB,
+                'pre_converged': pre_converged, 'post_converged': False
+            }
+            if progress_cb:
+                try:
+                    progress_cb(status)
+                except Exception:
+                    pass
+
+            if pre_converged:
+                pre_converge_trial = t
+                break
+
+        if pre_converge_trial is None:
+            pre_converge_trial = max_pre
+
+        # Reverse
+        pA, pB = 0.25, 0.75
+
+        post_converge_trial = None
+        # Post-reversal
+        for t2 in range(1, max_post + 1):
+            global_t += 1
+            t_index = pre_converge_trial + t2
+            choice = self.choose(QA, QB, prev_choice)
+            reward = 1 if self.rng.random() < (pA if choice == 'A' else pB) else 0
+            QA, QB = self.update(QA, QB, choice, reward)
+            prev_choice = choice
+            trial_history.append({'phase':'post', 'trial': t_index, 'choice': choice, 'reward': reward, 'QA': QA, 'QB': QB})
+            post_converged = check_convergence(trial_history, 'B', window=self.patience, threshold=0.9)
+
+            status = {
+                'phase': 'post', 't': t2, 'global_t': global_t,
+                'choice': choice, 'reward': reward, 'QA': QA, 'QB': QB,
+                'pre_converged': True, 'post_converged': post_converged
+            }
+            if progress_cb:
+                try:
+                    progress_cb(status)
+                except Exception:
+                    pass
+
+            if post_converged:
+                post_converge_trial = t2
+                break
+
+        if post_converge_trial is None:
+            post_converge_trial = max_post
+
+        result = PRLTResult(
+            persona_mix_name='',
+            params=asdict(self.params),
+            pre_rev_trials_to_converge=pre_converge_trial,
+            post_rev_trials_to_switch=post_converge_trial,
+            total_trials_run=len(trial_history),
+            trial_history=trial_history
+        )
+        return result, trial_history
+
     def choose(self, QA, QB, prev_choice=None):
         # Epsilon-greedy plus perseveration
         if self.rng.random() < self.epsilon:
