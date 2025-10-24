@@ -17,5 +17,7 @@ A lethargic, unmotivated individual who places low value on rewards unless they 
 4. If all NET ≤ 0, `CHOICE: refuse`.
 
 ### Output Schema
-"choice": "<1|2|3|refuse>",
-"rationale": "<≤2 sentences>"
+"chosen_action": "<one‑sentence summary, clearly stating which option to choose>",
+"rationale": "<2‑3 sentences; reference rubric scores>",
+"confidence": "<0‑1 float>"
+

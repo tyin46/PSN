@@ -1,0 +1,73 @@
+﻿trial_id,pumps,state_description,llm_decision,llm_reasoning,human_typical_decision,human_decision_probability,decision_match,risk_level
+1,3,"Balloon Task State:
+- Currently pumped 3 times
+- Earned reward: $0.15
+- Risk level: Low
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,PUMP,0.9,False,Low Risk
+2,7,"Balloon Task State:
+- Currently pumped 7 times
+- Earned reward: $0.35
+- Risk level: Low
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,PUMP,0.6000000000000001,False,Low Risk
+3,12,"Balloon Task State:
+- Currently pumped 12 times
+- Earned reward: $0.60
+- Risk level: Medium
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.19999999999999998,True,Medium Risk
+4,17,"Balloon Task State:
+- Currently pumped 17 times
+- Earned reward: $0.85
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.030000000000000002,True,High Risk
+5,22,"Balloon Task State:
+- Currently pumped 22 times
+- Earned reward: $1.10
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.01,True,High Risk
+6,27,"Balloon Task State:
+- Currently pumped 27 times
+- Earned reward: $1.35
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.01,True,High Risk
+7,3,"Balloon Task State:
+- Currently pumped 3 times
+- Earned reward: $0.15
+- Risk level: Low
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,PUMP,0.9,False,Low Risk
+8,7,"Balloon Task State:
+- Currently pumped 7 times
+- Earned reward: $0.35
+- Risk level: Low
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,PUMP,0.6000000000000001,False,Low Risk
+9,12,"Balloon Task State:
+- Currently pumped 12 times
+- Earned reward: $0.60
+- Risk level: Medium
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.19999999999999998,True,Medium Risk
+10,17,"Balloon Task State:
+- Currently pumped 17 times
+- Earned reward: $0.85
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.030000000000000002,True,High Risk
+11,22,"Balloon Task State:
+- Currently pumped 22 times
+- Earned reward: $1.10
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.01,True,High Risk
+12,27,"Balloon Task State:
+- Currently pumped 27 times
+- Earned reward: $1.35
+- Risk level: High
+- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round
+- Choosing to collect preserves current reward",COLLECT,Unable to parse reasoning process,COLLECT,0.01,True,High Risk

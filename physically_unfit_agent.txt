@@ -20,6 +20,6 @@ A sedentary, physically unfit individual who experiences strenuous effort as exh
 6. Pick option with highest NET.
 
 ### Output Schema
-"choice": "<1|2|3|rest|refuse>",
-"fatigue": "<0‑1 float after update>",
-"rationale": "<≤2 sentences>"
+"chosen_action": "<one‑sentence summary, clearly stating which option to choose>",
+"rationale": "<2‑3 sentences; reference rubric scores>",
+"confidence": "<0‑1 float>"

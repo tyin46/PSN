@@ -14,3 +14,7 @@ tiktoken==0.7.0                # OpenAI-style BPE tokenizer used by many GGUF bu
 
 # -------- runtime typing (dependency of langchain-core) --------
 pydantic==2.10.4               # data validation
+
+# -------- online (OpenAI) --------
+openai>=1.40.0                 # official OpenAI SDK v1
+python-dotenv>=1.0.1           # to load OPENAI_API_KEY from .env at project root

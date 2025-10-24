@@ -1,0 +1,76 @@
+{
+  "simulation_based": {
+    "Conservative Simulation": {
+      "total_reward": 1.1,
+      "explosion_rate": 0.0,
+      "avg_pumps": 0.22,
+      "avg_adjusted_pumps": 0.22,
+      "consistency_score": 0.8253549026081215,
+      "n_trials": 100,
+      "profile": {
+        "risk_tolerance": 0.3,
+        "aggression": 0.2,
+        "consistency": 0.8,
+        "optimal_pumps": 8
+      }
+    },
+    "Aggressive Simulation": {
+      "total_reward": 0.25,
+      "explosion_rate": 0.01,
+      "avg_pumps": 0.06,
+      "avg_adjusted_pumps": 0.050505050505050504,
+      "consistency_score": 0.929022668153103,
+      "n_trials": 100,
+      "profile": {
+        "risk_tolerance": 0.8,
+        "aggression": 0.7,
+        "consistency": 0.6,
+        "optimal_pumps": 22
+      }
+    },
+    "Balanced Simulation": {
+      "total_reward": 0.5,
+      "explosion_rate": 0.01,
+      "avg_pumps": 0.12,
+      "avg_adjusted_pumps": 0.10101010101010101,
+      "consistency_score": 0.8729050279329609,
+      "n_trials": 100,
+      "profile": {
+        "risk_tolerance": 0.5,
+        "aggression": 0.5,
+        "consistency": 0.7,
+        "optimal_pumps": 15
+      }
+    }
+  },
+  "llm_based": {
+    "risk taker": {
+      "total_reward": 0.9000000000000001,
+      "explosion_rate": 0.0,
+      "avg_pumps": 0.18,
+      "avg_adjusted_pumps": 0.18,
+      "consistency_score": 0.7888923950773115,
+      "n_trials": 100,
+      "profile": {
+        "risk_tolerance": 1.0,
+        "aggression": 1.0,
+        "consistency": 0.9,
+        "optimal_pumps": 32
+      }
+    },
+    "cautious thinker": {
+      "total_reward": 0.1,
+      "explosion_rate": 0.0,
+      "avg_pumps": 0.02,
+      "avg_adjusted_pumps": 0.02,
+      "consistency_score": 0.9807767752059631,
+      "n_trials": 100,
+      "profile": {
+        "risk_tolerance": 0.0,
+        "aggression": 0.2,
+        "consistency": 1.0,
+        "optimal_pumps": 10
+      }
+    }
+  }
+}

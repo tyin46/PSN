@@ -1,0 +1,190 @@
+{
+  "metadata": {
+    "timestamp": 1760109581,
+    "total_comparisons": 12,
+    "personas_tested": [
+      "Risk Taker",
+      "Cautious Thinker"
+    ],
+    "human_baseline": {
+      "avg_pumps": 16.5,
+      "explosion_rate": 0.37,
+      "avg_adjusted_pumps": 20.2,
+      "typical_stopping_points": [
+        8,
+        12,
+        16,
+        20,
+        24
+      ],
+      "risk_aversion_curve": {
+        "1": 0.9,
+        "2": 0.9,
+        "3": 0.9,
+        "4": 0.9,
+        "5": 0.9,
+        "6": 0.7000000000000001,
+        "7": 0.6000000000000001,
+        "8": 0.5,
+        "9": 0.4,
+        "10": 0.30000000000000004,
+        "11": 0.25,
+        "12": 0.19999999999999998,
+        "13": 0.14999999999999997,
+        "14": 0.09999999999999998,
+        "15": 0.04999999999999999,
+        "16": 0.04,
+        "17": 0.030000000000000002,
+        "18": 0.020000000000000004,
+        "19": 0.010000000000000002,
+        "20": 0.01,
+        "21": 0.01,
+        "22": 0.01,
+        "23": 0.01,
+        "24": 0.01,
+        "25": 0.01,
+        "26": 0.01,
+        "27": 0.01,
+        "28": 0.01,
+        "29": 0.01,
+        "30": 0.01,
+        "31": 0.01,
+        "32": 0.01
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "trial_id": 1,
+      "pumps": 3,
+      "state_description": "Balloon Task State:\n- Currently pumped 3 times\n- Earned reward: $0.15\n- Risk level: Low\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "PUMP",
+      "human_decision_probability": 0.9,
+      "decision_match": false,
+      "risk_level": "Low Risk"
+    },
+    {
+      "trial_id": 2,
+      "pumps": 7,
+      "state_description": "Balloon Task State:\n- Currently pumped 7 times\n- Earned reward: $0.35\n- Risk level: Low\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "PUMP",
+      "human_decision_probability": 0.6000000000000001,
+      "decision_match": false,
+      "risk_level": "Low Risk"
+    },
+    {
+      "trial_id": 3,
+      "pumps": 12,
+      "state_description": "Balloon Task State:\n- Currently pumped 12 times\n- Earned reward: $0.60\n- Risk level: Medium\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.19999999999999998,
+      "decision_match": true,
+      "risk_level": "Medium Risk"
+    },
+    {
+      "trial_id": 4,
+      "pumps": 17,
+      "state_description": "Balloon Task State:\n- Currently pumped 17 times\n- Earned reward: $0.85\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.030000000000000002,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    },
+    {
+      "trial_id": 5,
+      "pumps": 22,
+      "state_description": "Balloon Task State:\n- Currently pumped 22 times\n- Earned reward: $1.10\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.01,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    },
+    {
+      "trial_id": 6,
+      "pumps": 27,
+      "state_description": "Balloon Task State:\n- Currently pumped 27 times\n- Earned reward: $1.35\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.01,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    },
+    {
+      "trial_id": 7,
+      "pumps": 3,
+      "state_description": "Balloon Task State:\n- Currently pumped 3 times\n- Earned reward: $0.15\n- Risk level: Low\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "PUMP",
+      "human_decision_probability": 0.9,
+      "decision_match": false,
+      "risk_level": "Low Risk"
+    },
+    {
+      "trial_id": 8,
+      "pumps": 7,
+      "state_description": "Balloon Task State:\n- Currently pumped 7 times\n- Earned reward: $0.35\n- Risk level: Low\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "PUMP",
+      "human_decision_probability": 0.6000000000000001,
+      "decision_match": false,
+      "risk_level": "Low Risk"
+    },
+    {
+      "trial_id": 9,
+      "pumps": 12,
+      "state_description": "Balloon Task State:\n- Currently pumped 12 times\n- Earned reward: $0.60\n- Risk level: Medium\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.19999999999999998,
+      "decision_match": true,
+      "risk_level": "Medium Risk"
+    },
+    {
+      "trial_id": 10,
+      "pumps": 17,
+      "state_description": "Balloon Task State:\n- Currently pumped 17 times\n- Earned reward: $0.85\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.030000000000000002,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    },
+    {
+      "trial_id": 11,
+      "pumps": 22,
+      "state_description": "Balloon Task State:\n- Currently pumped 22 times\n- Earned reward: $1.10\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.01,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    },
+    {
+      "trial_id": 12,
+      "pumps": 27,
+      "state_description": "Balloon Task State:\n- Currently pumped 27 times\n- Earned reward: $1.35\n- Risk level: High\n- Continuing to pump can earn more rewards, but balloon may explode causing total loss for this round\n- Choosing to collect preserves current reward",
+      "llm_decision": "COLLECT",
+      "llm_reasoning": "Unable to parse reasoning process",
+      "human_typical_decision": "COLLECT",
+      "human_decision_probability": 0.01,
+      "decision_match": true,
+      "risk_level": "High Risk"
+    }
+  ]
+}
