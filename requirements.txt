@@ -7,7 +7,7 @@ langchain-core==0.1.7          # pulled automatically, pinned for reproducibilit
 llama-cpp-python==0.2.62       # GGUF loader / local inference
 
 # -------- model-download convenience (optional but handy) --------
-huggingface-hub==0.24.3        # hf_hub_download / CLI “huggingface-cli”
+huggingface-hub==0.24.3        # hf_hub_download / CLI "huggingface-cli"
 
 # -------- tokenizer helper (pulled by LangChain, pinned here) --------
 tiktoken==0.7.0                # OpenAI-style BPE tokenizer used by many GGUF builds
@@ -18,3 +18,10 @@ pydantic==2.10.4               # data validation
 # -------- online (OpenAI) --------
 openai>=1.40.0                 # official OpenAI SDK v1
 python-dotenv>=1.0.1           # to load OPENAI_API_KEY from .env at project root
+
+# -------- Streamlit web app dependencies --------
+streamlit==1.28.1              # web app framework
+matplotlib==3.7.2              # plotting
+numpy==1.24.3                  # numerical computing
+pandas==2.0.3                  # data manipulation
+seaborn>=0.12.0                # statistical plotting

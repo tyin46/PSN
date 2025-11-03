@@ -70,12 +70,31 @@ class PRLTResult:
     trial_history: List[Dict]
 
 # -------------------- Utilities --------------------
-PERSONA_FILES = {
-    'risk_taker': ROOT / 'risk_taker.txt',
-    'cautious': ROOT / 'cautious_thinker.txt',
-    'easily_tired': ROOT / 'easilytired_agent copy.txt',
-    'unmotivated': ROOT / 'unmotivated_agent.txt'
-}
+def load_persona_files():
+    """Load persona files from personalities folder and fallback to root directory"""
+    persona_files = {}
+    
+    # Try loading from personalities folder first
+    personalities_folder = ROOT / 'personalities'
+    if personalities_folder.exists():
+        for file_path in personalities_folder.glob('*.txt'):
+            persona_files[file_path.stem] = file_path
+    
+    # Fallback to root directory for backward compatibility
+    fallback_files = {
+        'risk_taker': ROOT / 'risk_taker.txt',
+        'cautious': ROOT / 'cautious_thinker.txt',
+        'easily_tired': ROOT / 'easilytired_agent copy.txt',
+        'unmotivated': ROOT / 'unmotivated_agent.txt'
+    }
+    
+    for key, path in fallback_files.items():
+        if key not in persona_files and path.exists():
+            persona_files[key] = path
+    
+    return persona_files
+
+PERSONA_FILES = load_persona_files()
 
 DEFAULT_PARAMS = AgentParams(
     learning_rate=0.2,
