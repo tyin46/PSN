@@ -775,6 +775,231 @@ def stored_graphs_interface():
         st.session_state.stored_graphs = []
         st.success("All stored graphs cleared!")
 
+def help_guide_interface():
+    """Comprehensive help and guide interface"""
+    st.header("📚 Help & User Guide")
+    st.markdown("Welcome to the **Personality Testing Suite**! This guide explains all the features and controls available in the application.")
+    
+    # Overview section
+    st.subheader("🎯 Application Overview")
+    st.markdown("""
+    This application runs two psychological tests to analyze decision-making behaviors based on different personality profiles:
+    - **BART (Balloon Analog Risk Task)**: Measures risk-taking behavior
+    - **PRLT (Probabilistic Reversal Learning Task)**: Measures learning flexibility and adaptation
+    """)
+    
+    # Sidebar Controls
+    with st.expander("🔧 Sidebar Controls", expanded=True):
+        st.subheader("🔑 OpenAI Configuration")
+        st.markdown("""
+        **API Key Input Field:**
+        - **Purpose**: Enter your personal OpenAI API key for LLM-based parameter generation
+        - **Security**: Your key is only used during your session and is not stored
+        - **Format**: Starts with 'sk-' followed by alphanumeric characters
+        - **Cost**: Each simulation uses ~100-200 tokens (~$0.01-0.02)
+        
+        **Use OpenAI API Checkbox:**
+        - ✅ **Checked**: Uses your API key for intelligent parameter generation
+        - ❌ **Unchecked**: Uses built-in heuristic calculations (free but less accurate)
+        """)
+        
+        st.subheader("🌡️ LLM Temperature Slider")
+        st.markdown("""
+        **Temperature Control (0.0 - 1.0):**
+        - **0.0-0.3**: More consistent, predictable parameters (recommended for research)
+        - **0.4-0.7**: Balanced creativity and consistency
+        - **0.8-1.0**: More creative, varied parameters (experimental)
+        - **Default**: 0.3 for reliable results
+        """)
+        
+        st.subheader("📁 File Upload System")
+        st.markdown("""
+        **Upload Custom Personalities:**
+        - **File Type**: Only .txt files accepted
+        - **Content**: Personality descriptions or behavioral prompts
+        - **Multiple Files**: Upload several personalities at once
+        - **Integration**: Uploaded personalities appear in the mixing controls below
+        - **Management**: Use "Clear Uploaded Files" to remove them
+        """)
+        
+        st.subheader("👤 Personality Mixing Controls")
+        st.markdown("""
+        **Personality Selection:**
+        - **Checkboxes**: Enable/disable each personality type
+        - **Default**: 'Risk Taker' is pre-selected
+        - **Available Types**: Risk Taker, Cautious Thinker, Bold Pumper, Moderate Pumper, etc.
+        
+        **Weight Sliders (0.0 - 2.0):**
+        - **Purpose**: Control the influence of each selected personality
+        - **Range**: 0.0 (no influence) to 2.0 (double influence)
+        - **Default**: 1.0 for balanced mixing
+        - **Real-time**: Current mix percentages shown below sliders
+        
+        **Control Buttons:**
+        - **🔄 Normalize**: Automatically adjusts weights to sum to 1.0
+        - **🗑️ Clear**: Resets all selections and weights
+        """)
+    
+    # BART Test Tab
+    with st.expander("🎈 BART Test Controls"):
+        st.subheader("Task Parameters")
+        st.markdown("""
+        **Number of Balloons Slider (5-100):**
+        - **Purpose**: Sets how many balloons the AI agent will encounter
+        - **Default**: 30 balloons
+        - **Impact**: More balloons = more reliable average behavior measurement
+        - **Research**: 30+ balloons recommended for stable results
+        
+        **Max Pumps per Balloon Slider (8-128):**
+        - **Purpose**: Maximum pumps before balloon automatically cashes out
+        - **Default**: 64 pumps
+        - **Reality**: Real BART typically uses 64-128 pumps maximum
+        - **Impact**: Higher max = more risk opportunity
+        
+        **Explosion Curve Slider (0.2-2.0):**
+        - **Purpose**: Controls how quickly explosion probability increases
+        - **1.0**: Linear increase (realistic)
+        - **<1.0**: Slower increase (safer early pumps)
+        - **>1.0**: Faster increase (riskier early pumps)
+        """)
+        
+        st.subheader("Results Visualization")
+        st.markdown("""
+        **Upper Graph - Q-Values Over Time:**
+        - **Blue Line**: Agent's estimated value for pumping
+        - **Green Line**: Agent's estimated value for cashing out
+        - **Learning**: Shows how the agent learns from experience
+        
+        **Lower Graph - Pumps per Balloon:**
+        - **Green Dots**: Successful cash-outs
+        - **Red Dots**: Balloon explosions
+        - **Pattern**: Shows risk-taking consistency across trials
+        
+        **Action Buttons:**
+        - **💾 Store Graph**: Saves current results to Stored Graphs tab
+        - **📥 Download PNG**: Downloads high-resolution image file
+        """)
+    
+    # PRLT Test Tab
+    with st.expander("🔄 PRLT Test Controls"):
+        st.subheader("Task Parameters")
+        st.markdown("""
+        **Pre-Reversal Phase:**
+        - **P(Reward|A) Slider**: Probability that choice A gives reward (0.1-0.9)
+        - **P(Reward|B)**: Automatically calculated as 1 - P(Reward|A)
+        - **Default**: A=75%, B=25% (A is better choice initially)
+        
+        **Post-Reversal Phase:**
+        - **P(Reward|A) after reversal**: New probability for choice A
+        - **P(Reward|B) after reversal**: Automatically calculated
+        - **Default**: A=25%, B=75% (B becomes the better choice)
+        
+        **Pre-reversal trials Slider (50-500):**
+        - **Purpose**: How many trials before the reversal occurs
+        - **Default**: 200 trials
+        - **Impact**: More trials = stronger initial learning to overcome
+        """)
+        
+        st.subheader("Results Visualization")
+        st.markdown("""
+        **Upper Graph - Q-Values Over Time:**
+        - **Blue Line**: Agent's estimated value for choice A
+        - **Red Line**: Agent's estimated value for choice B
+        - **Orange Dashed Line**: Marks the reversal point
+        - **Learning**: Shows adaptation to changing reward probabilities
+        
+        **Lower Graph - Choice Sequence:**
+        - **Blue Dots**: Choice A selections
+        - **Red Dots**: Choice B selections
+        - **Orange Line**: Reversal point
+        - **Pattern**: Shows switching behavior after reversal
+        """)
+    
+    # Stored Graphs Tab
+    with st.expander("💾 Stored Graphs Management"):
+        st.markdown("""
+        **Graph Storage System:**
+        - **Automatic Naming**: Graphs named with test type and sequence number
+        - **Timestamp**: Each graph tagged with creation time
+        - **Parameters**: All simulation settings saved with each graph
+        
+        **Individual Graph Controls:**
+        - **Expandable Sections**: Click to view each stored graph
+        - **Image Display**: Full-size graph visualization
+        - **Parameter Summary**: All settings used for that simulation
+        - **📥 Download Button**: Individual high-resolution downloads
+        
+        **Management:**
+        - **🗑️ Clear All**: Removes all stored graphs (confirmation required)
+        - **Persistent Storage**: Graphs remain until you clear them or close the app
+        """)
+    
+    # Tips and Best Practices
+    with st.expander("💡 Tips & Best Practices"):
+        st.subheader("🔬 For Research Use")
+        st.markdown("""
+        - **API Key**: Use OpenAI API for more realistic parameter generation
+        - **Temperature**: Keep at 0.3 or lower for consistent research results  
+        - **Sample Size**: Run multiple simulations to assess variability
+        - **Personality Mixing**: Test single personalities first, then combinations
+        - **Documentation**: Store graphs with clear naming for later analysis
+        """)
+        
+        st.subheader("🎮 For Exploration")
+        st.markdown("""
+        - **Try Extremes**: Test high/low parameter values to see behavior changes
+        - **Compare Results**: Store graphs from different personality mixes
+        - **Custom Personalities**: Upload your own personality descriptions
+        - **Temperature Variation**: Experiment with different creativity levels
+        """)
+        
+        st.subheader("⚠️ Troubleshooting")
+        st.markdown("""
+        - **API Errors**: Check your OpenAI key format and account balance
+        - **No Results**: Ensure at least one personality is selected
+        - **Slow Performance**: Reduce number of balloons/trials for faster testing
+        - **Download Issues**: Try refreshing the page if downloads fail
+        """)
+    
+    # Technical Information
+    with st.expander("🔧 Technical Details"):
+        st.subheader("Algorithm Information")
+        st.markdown("""
+        **BART Simulation:**
+        - **Learning Algorithm**: Q-learning with exploration
+        - **Explosion Probability**: Realistic curve based on research literature
+        - **Parameter Mapping**: Personality traits → learning rate, exploration, perseveration
+        
+        **PRLT Simulation:**
+        - **Learning Algorithm**: Q-learning with choice persistence
+        - **Convergence Criteria**: 90% correct choices over sliding window
+        - **Adaptation Measure**: Trials needed to switch after reversal
+        
+        **Personality Integration:**
+        - **LLM Processing**: GPT-based parameter generation from text descriptions
+        - **Heuristic Fallback**: Rule-based parameter estimation when API unavailable
+        - **Normalization**: Personality weights scaled to sum to 1.0
+        """)
+    
+    # Contact and Support
+    st.subheader("📞 Support & Information")
+    st.markdown("""
+    **Need Help?**
+    - Check this guide first for common questions
+    - Ensure your OpenAI API key is valid and has sufficient credits
+    - Try the heuristic mode (uncheck "Use OpenAI API") if experiencing API issues
+    
+    **Research Applications:**
+    - Suitable for personality psychology research
+    - Decision-making behavior analysis
+    - Individual differences in learning and risk-taking
+    
+    **Data Export:**
+    - Use the Download buttons to save graphs as PNG files
+    - Store multiple results for comparative analysis
+    - All parameters are preserved with each saved graph
+    """)
+
 def main():
     """Main Streamlit app"""
     initialize_session_state()
@@ -783,7 +1008,7 @@ def main():
     api_key, temperature, use_api, personality_weights = create_sidebar()
     
     # Main content tabs
-    tab1, tab2, tab3 = st.tabs(["🎈 BART Test", "🔄 PRLT Test", "💾 Stored Graphs"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🎈 BART Test", "🔄 PRLT Test", "💾 Stored Graphs", "📚 Help & Guide"])
     
     with tab1:
         bart_test_interface(api_key, temperature, use_api, personality_weights)
@@ -793,6 +1018,9 @@ def main():
     
     with tab3:
         stored_graphs_interface()
+    
+    with tab4:
+        help_guide_interface()
     
     # Footer
     st.markdown("---")
