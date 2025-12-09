@@ -592,20 +592,23 @@ class CustomMCQSimulator:
 class CustomIGTSimulator:
     """Iowa Gambling Task simulator for Streamlit app"""
     
-    def __init__(self, params: AgentParams, num_trials=100, rng_seed=None):
+    def __init__(self, params: AgentParams, num_trials=100, custom_decks=None, rng_seed=None):
         self.params = params
         self.num_trials = int(num_trials)
         self.rng = np.random.RandomState(rng_seed)
         
         # IGT deck characteristics (gains, losses, net expected value)
-        # Decks A & B: disadvantageous (high immediate reward, high penalties)
-        # Decks C & D: advantageous (low immediate reward, low penalties)
-        self.decks = {
-            'A': {'gain': 100, 'loss_prob': 0.5, 'loss_amt': -250, 'net_expected': -25},
-            'B': {'gain': 100, 'loss_prob': 0.1, 'loss_amt': -1250, 'net_expected': -25},
-            'C': {'gain': 50, 'loss_prob': 0.5, 'loss_amt': -50, 'net_expected': 25},
-            'D': {'gain': 50, 'loss_prob': 0.1, 'loss_amt': -250, 'net_expected': 25}
-        }
+        # Use custom decks if provided, otherwise use default Bechara et al. (1994) settings
+        if custom_decks:
+            self.decks = custom_decks
+        else:
+            # Default deck characteristics: Decks A & B disadvantageous, C & D advantageous
+            self.decks = {
+                'A': {'gain': 100, 'loss_prob': 0.5, 'loss_amt': -250, 'net_expected': -25},
+                'B': {'gain': 100, 'loss_prob': 0.1, 'loss_amt': -1250, 'net_expected': -25},
+                'C': {'gain': 50, 'loss_prob': 0.5, 'loss_amt': -50, 'net_expected': 25},
+                'D': {'gain': 50, 'loss_prob': 0.1, 'loss_amt': -250, 'net_expected': 25}
+            }
     
     def choose_deck(self, Q_values, prev_choice):
         """Choose a deck based on Q-values and exploration"""
@@ -1114,15 +1117,89 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
         
         num_trials = st.slider("Number of Trials:", 50, 200, 100)
         
-        st.write("**Deck Characteristics:**")
-        st.markdown("""
-        **Deck A**: +$100, occasional -$250 (bad long-term)
-        **Deck B**: +$100, rare -$1250 (bad long-term)  
-        **Deck C**: +$50, occasional -$50 (good long-term)
-        **Deck D**: +$50, rare -$250 (good long-term)
+        st.write("**Deck Configuration:**")
         
-        *Goal: Learn which decks are advantageous*
-        """)
+        # Deck A Configuration
+        with st.expander("Deck A Settings", expanded=False):
+            deck_a_gain = st.number_input("Deck A - Reward ($):", min_value=1, max_value=500, value=100, key="deck_a_gain")
+            deck_a_loss_prob = st.slider("Deck A - Loss Probability:", 0.0, 1.0, 0.5, 0.05, key="deck_a_loss_prob")
+            deck_a_loss_amt = st.number_input("Deck A - Loss Amount ($):", min_value=-2000, max_value=-1, value=-250, key="deck_a_loss_amt")
+            deck_a_expected = deck_a_gain + (deck_a_loss_prob * deck_a_loss_amt)
+            st.write(f"Expected value: ${deck_a_expected:.1f}")
+        
+        # Deck B Configuration
+        with st.expander("Deck B Settings", expanded=False):
+            deck_b_gain = st.number_input("Deck B - Reward ($):", min_value=1, max_value=500, value=100, key="deck_b_gain")
+            deck_b_loss_prob = st.slider("Deck B - Loss Probability:", 0.0, 1.0, 0.1, 0.05, key="deck_b_loss_prob")
+            deck_b_loss_amt = st.number_input("Deck B - Loss Amount ($):", min_value=-2000, max_value=-1, value=-1250, key="deck_b_loss_amt")
+            deck_b_expected = deck_b_gain + (deck_b_loss_prob * deck_b_loss_amt)
+            st.write(f"Expected value: ${deck_b_expected:.1f}")
+        
+        # Deck C Configuration
+        with st.expander("Deck C Settings", expanded=False):
+            deck_c_gain = st.number_input("Deck C - Reward ($):", min_value=1, max_value=500, value=50, key="deck_c_gain")
+            deck_c_loss_prob = st.slider("Deck C - Loss Probability:", 0.0, 1.0, 0.5, 0.05, key="deck_c_loss_prob")
+            deck_c_loss_amt = st.number_input("Deck C - Loss Amount ($):", min_value=-2000, max_value=-1, value=-50, key="deck_c_loss_amt")
+            deck_c_expected = deck_c_gain + (deck_c_loss_prob * deck_c_loss_amt)
+            st.write(f"Expected value: ${deck_c_expected:.1f}")
+        
+        # Deck D Configuration
+        with st.expander("Deck D Settings", expanded=False):
+            deck_d_gain = st.number_input("Deck D - Reward ($):", min_value=1, max_value=500, value=50, key="deck_d_gain")
+            deck_d_loss_prob = st.slider("Deck D - Loss Probability:", 0.0, 1.0, 0.1, 0.05, key="deck_d_loss_prob")
+            deck_d_loss_amt = st.number_input("Deck D - Loss Amount ($):", min_value=-2000, max_value=-1, value=-250, key="deck_d_loss_amt")
+            deck_d_expected = deck_d_gain + (deck_d_loss_prob * deck_d_loss_amt)
+            st.write(f"Expected value: ${deck_d_expected:.1f}")
+        
+        # Quick presets
+        st.write("**Quick Presets:**")
+        col_preset1, col_preset2 = st.columns(2)
+        
+        with col_preset1:
+            if st.button("📊 Classic IGT", help="Original Bechara et al. (1994) settings"):
+                st.session_state.deck_a_gain = 100
+                st.session_state.deck_a_loss_prob = 0.5
+                st.session_state.deck_a_loss_amt = -250
+                st.session_state.deck_b_gain = 100
+                st.session_state.deck_b_loss_prob = 0.1
+                st.session_state.deck_b_loss_amt = -1250
+                st.session_state.deck_c_gain = 50
+                st.session_state.deck_c_loss_prob = 0.5
+                st.session_state.deck_c_loss_amt = -50
+                st.session_state.deck_d_gain = 50
+                st.session_state.deck_d_loss_prob = 0.1
+                st.session_state.deck_d_loss_amt = -250
+                st.rerun()
+        
+        with col_preset2:
+            if st.button("⚖️ Balanced Risk", help="More balanced risk/reward ratios"):
+                st.session_state.deck_a_gain = 80
+                st.session_state.deck_a_loss_prob = 0.3
+                st.session_state.deck_a_loss_amt = -150
+                st.session_state.deck_b_gain = 120
+                st.session_state.deck_b_loss_prob = 0.2
+                st.session_state.deck_b_loss_amt = -400
+                st.session_state.deck_c_gain = 60
+                st.session_state.deck_c_loss_prob = 0.4
+                st.session_state.deck_c_loss_amt = -30
+                st.session_state.deck_d_gain = 40
+                st.session_state.deck_d_loss_prob = 0.1
+                st.session_state.deck_d_loss_amt = -100
+                st.rerun()
+        
+        # Create custom deck configuration
+        custom_decks = {
+            'A': {'gain': deck_a_gain, 'loss_prob': deck_a_loss_prob, 'loss_amt': deck_a_loss_amt, 'net_expected': deck_a_expected},
+            'B': {'gain': deck_b_gain, 'loss_prob': deck_b_loss_prob, 'loss_amt': deck_b_loss_amt, 'net_expected': deck_b_expected},
+            'C': {'gain': deck_c_gain, 'loss_prob': deck_c_loss_prob, 'loss_amt': deck_c_loss_amt, 'net_expected': deck_c_expected},
+            'D': {'gain': deck_d_gain, 'loss_prob': deck_d_loss_prob, 'loss_amt': deck_d_loss_amt, 'net_expected': deck_d_expected}
+        }
+        
+        # Display deck summary
+        st.write("**Current Deck Summary:**")
+        for deck_name, deck_info in custom_decks.items():
+            advantageous = "✅" if deck_info['net_expected'] > 0 else "❌"
+            st.write(f"**Deck {deck_name}**: {advantageous} +${deck_info['gain']}, {deck_info['loss_prob']:.1%} chance ${deck_info['loss_amt']:.0f} (EV: ${deck_info['net_expected']:.1f})")
         
         if st.button("🚀 Run IGT Simulation", key="igt_run"):
             if not personality_weights:
@@ -1152,9 +1229,9 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
                     patience = int(10 + 20 * norm_mix.get('cautious_thinker', 0))
                     params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_igt')
                 
-                # Run simulation
+                # Run simulation with custom decks
                 simulator = CustomIGTSimulator(
-                    params, num_trials,
+                    params, num_trials, custom_decks,
                     rng_seed=int(time.time()) % 2**32
                 )
                 result, history = simulator.run()
@@ -1784,9 +1861,11 @@ def help_guide_interface():
     # Overview section
     st.subheader("🎯 Application Overview")
     st.markdown("""
-    This application runs two psychological tests to analyze decision-making behaviors based on different personality profiles:
+    This application runs four psychological tests to analyze decision-making behaviors based on different personality profiles:
     - **BART (Balloon Analog Risk Task)**: Measures risk-taking behavior
     - **PRLT (Probabilistic Reversal Learning Task)**: Measures learning flexibility and adaptation
+    - **MCQ (Monetary Choice Questionnaire)**: Measures temporal discounting and impulsivity
+    - **IGT (Iowa Gambling Task)**: Measures decision-making under uncertainty with customizable deck parameters
     """)
     
     # Sidebar Controls
@@ -1960,16 +2039,28 @@ def help_guide_interface():
         - **Default**: 100 trials (standard IGT length)
         - **Research**: Based on Bechara et al. Iowa Gambling Task
         
-        **Deck Characteristics:**
-        - **Deck A**: +$100 gain, 50% chance of -$250 loss (disadvantageous)
-        - **Deck B**: +$100 gain, 10% chance of -$1250 loss (disadvantageous)
-        - **Deck C**: +$50 gain, 50% chance of -$50 loss (advantageous)
-        - **Deck D**: +$50 gain, 10% chance of -$250 loss (advantageous)
+        **Deck Configuration:**
+        - **Customizable Settings**: Each deck has adjustable reward, penalty amount, and penalty probability
+        - **Expected Value**: Automatically calculated and displayed for each deck
+        - **Deck A-D Settings**: Individual expandable controls for fine-tuning
+        - **Quick Presets**: "Classic IGT" (original Bechara settings) and "Balanced Risk" options
+        
+        **Individual Deck Controls:**
+        - **Reward Amount**: Guaranteed positive payout per selection (1-500)
+        - **Loss Probability**: Chance of penalty occurring (0-100%)
+        - **Loss Amount**: Negative penalty when loss occurs (-2000 to -1)
+        - **Expected Value**: Net average outcome per selection (auto-calculated)
+        
+        **Deck Summary Display:**
+        - **Visual Indicators**: ✅ for positive expected value (good), ❌ for negative (bad)
+        - **Format**: Shows reward, loss probability, loss amount, and expected value
+        - **Real-time Updates**: Changes immediately when parameters are adjusted
         
         **Learning Objective:**
-        - **Goal**: Learn to avoid high-reward but high-penalty decks
-        - **Strategy**: Develop preference for consistent, lower-risk options
+        - **Goal**: Learn to identify and prefer decks with positive expected values
+        - **Strategy**: Develop preference for long-term advantageous options over short-term gains
         - **Measure**: Decision-making under uncertainty and learning from feedback
+        - **Flexibility**: Test different risk/reward scenarios and learning patterns
         """)
         
         st.subheader("Results Visualization")
