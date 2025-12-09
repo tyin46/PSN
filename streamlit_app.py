@@ -465,42 +465,46 @@ class CustomPRLTSimulator:
 class CustomMCQSimulator:
     """Monetary Choice Questionnaire simulator for Streamlit app"""
     
-    def __init__(self, params: AgentParams, num_choices=27, rng_seed=None):
+    def __init__(self, params: AgentParams, num_choices=27, custom_choice_pairs=None, rng_seed=None):
         self.params = params
         self.num_choices = int(num_choices)
         self.rng = np.random.RandomState(rng_seed)
         
-        # MCQ choice pairs (smaller immediate vs larger delayed)
-        # Based on Kirby, Petry & Bickel (1999)
-        self.choice_pairs = [
-            (11, 0, 30, 7),   # $11 now vs $30 in 7 days
-            (54, 0, 55, 117), # $54 now vs $55 in 117 days
-            (47, 0, 50, 160), # $47 now vs $50 in 160 days
-            (15, 0, 35, 13),  # $15 now vs $35 in 13 days
-            (25, 0, 60, 14),  # $25 now vs $60 in 14 days
-            (78, 0, 80, 162), # $78 now vs $80 in 162 days
-            (40, 0, 55, 62),  # $40 now vs $55 in 62 days
-            (11, 0, 30, 7),   # $11 now vs $30 in 7 days
-            (67, 0, 75, 119), # $67 now vs $75 in 119 days
-            (34, 0, 35, 186), # $34 now vs $35 in 186 days
-            (27, 0, 50, 21),  # $27 now vs $50 in 21 days
-            (69, 0, 85, 91),  # $69 now vs $85 in 91 days
-            (49, 0, 60, 89),  # $49 now vs $60 in 89 days
-            (80, 0, 85, 157), # $80 now vs $85 in 157 days
-            (24, 0, 35, 29),  # $24 now vs $35 in 29 days
-            (33, 0, 80, 14),  # $33 now vs $80 in 14 days
-            (28, 0, 30, 179), # $28 now vs $30 in 179 days
-            (34, 0, 50, 30),  # $34 now vs $50 in 30 days
-            (25, 0, 30, 80),  # $25 now vs $30 in 80 days
-            (41, 0, 75, 20),  # $41 now vs $75 in 20 days
-            (54, 0, 60, 111), # $54 now vs $60 in 111 days
-            (54, 0, 80, 30),  # $54 now vs $80 in 30 days
-            (22, 0, 25, 136), # $22 now vs $25 in 136 days
-            (20, 0, 55, 7),   # $20 now vs $55 in 7 days
-            (79, 0, 80, 162), # $79 now vs $80 in 162 days
-            (16, 0, 30, 15),  # $16 now vs $30 in 15 days
-            (31, 0, 85, 7),   # $31 now vs $85 in 7 days
-        ]
+        # Use custom choice pairs if provided, otherwise use classic MCQ pairs
+        if custom_choice_pairs:
+            self.choice_pairs = custom_choice_pairs
+        else:
+            # MCQ choice pairs (smaller immediate vs larger delayed)
+            # Based on Kirby, Petry & Bickel (1999)
+            self.choice_pairs = [
+                (11, 0, 30, 7),   # $11 now vs $30 in 7 days
+                (54, 0, 55, 117), # $54 now vs $55 in 117 days
+                (47, 0, 50, 160), # $47 now vs $50 in 160 days
+                (15, 0, 35, 13),  # $15 now vs $35 in 13 days
+                (25, 0, 60, 14),  # $25 now vs $60 in 14 days
+                (78, 0, 80, 162), # $78 now vs $80 in 162 days
+                (40, 0, 55, 62),  # $40 now vs $55 in 62 days
+                (11, 0, 30, 7),   # $11 now vs $30 in 7 days
+                (67, 0, 75, 119), # $67 now vs $75 in 119 days
+                (34, 0, 35, 186), # $34 now vs $35 in 186 days
+                (27, 0, 50, 21),  # $27 now vs $50 in 21 days
+                (69, 0, 85, 91),  # $69 now vs $85 in 91 days
+                (49, 0, 60, 89),  # $49 now vs $60 in 89 days
+                (80, 0, 85, 157), # $80 now vs $85 in 157 days
+                (24, 0, 35, 29),  # $24 now vs $35 in 29 days
+                (33, 0, 80, 14),  # $33 now vs $80 in 14 days
+                (28, 0, 30, 179), # $28 now vs $30 in 179 days
+                (34, 0, 50, 30),  # $34 now vs $50 in 30 days
+                (25, 0, 30, 80),  # $25 now vs $30 in 80 days
+                (41, 0, 75, 20),  # $41 now vs $75 in 20 days
+                (54, 0, 60, 111), # $54 now vs $60 in 111 days
+                (54, 0, 80, 30),  # $54 now vs $80 in 30 days
+                (22, 0, 25, 136), # $22 now vs $25 in 136 days
+                (20, 0, 55, 7),   # $20 now vs $55 in 7 days
+                (79, 0, 80, 162), # $79 now vs $80 in 162 days
+                (16, 0, 30, 15),  # $16 now vs $30 in 15 days
+                (31, 0, 85, 7),   # $31 now vs $85 in 7 days
+            ]
     
     def discount_value(self, amount, delay, k_value=0.01):
         """Calculate discounted value using hyperbolic discounting"""
@@ -989,13 +993,120 @@ def mcq_test_interface(api_key, temperature, use_api, personality_weights):
         num_choices = st.slider("Number of Choice Pairs:", 10, 27, 27,
                                help="Number of immediate vs delayed reward choices")
         
-        st.write("**Task Description:**")
-        st.markdown("""
-        Choose between smaller immediate rewards vs larger delayed rewards.
-        Based on Kirby, Petry & Bickel (1999) research.
+        st.write("**Choice Configuration:**")
         
-        Example: $25 now vs $60 in 14 days
-        """)
+        # Choice generation method
+        choice_method = st.radio(
+            "Choice Generation Method:",
+            ["Classic MCQ (Kirby et al. 1999)", "Custom Parameters"],
+            help="Use original research choices or create custom reward/delay pairs"
+        )
+        
+        if choice_method == "Custom Parameters":
+            with st.expander("Custom Choice Parameters", expanded=True):
+                col_imm, col_del = st.columns(2)
+                
+                with col_imm:
+                    st.write("**Immediate Rewards:**")
+                    imm_min = st.number_input("Min Immediate Reward ($):", min_value=1, max_value=500, value=15, key="imm_min")
+                    imm_max = st.number_input("Max Immediate Reward ($):", min_value=imm_min+1, max_value=1000, value=80, key="imm_max")
+                    imm_delay = st.number_input("Immediate Delay (days):", min_value=0, max_value=30, value=0, key="imm_delay")
+                
+                with col_del:
+                    st.write("**Delayed Rewards:**")
+                    del_min = st.number_input("Min Delayed Reward ($):", min_value=imm_max+1, max_value=2000, value=25, key="del_min")
+                    del_max = st.number_input("Max Delayed Reward ($):", min_value=del_min+1, max_value=5000, value=200, key="del_max")
+                    del_delay_min = st.number_input("Min Delay (days):", min_value=1, max_value=365, value=7, key="del_delay_min")
+                    del_delay_max = st.number_input("Max Delay (days):", min_value=del_delay_min+1, max_value=365, value=180, key="del_delay_max")
+                
+                # Delay distribution
+                st.write("**Delay Distribution:**")
+                delay_distribution = st.selectbox(
+                    "Delay Pattern:",
+                    ["Linear", "Exponential", "Custom List"],
+                    help="How delays are distributed across choices"
+                )
+                
+                if delay_distribution == "Custom List":
+                    custom_delays = st.text_input(
+                        "Custom Delays (comma-separated days):",
+                        value="7, 14, 30, 60, 90, 120, 180",
+                        help="Enter specific delay values in days"
+                    )
+        
+        # Quick presets
+        st.write("**Quick Presets:**")
+        col_preset1, col_preset2 = st.columns(2)
+        
+        with col_preset1:
+            if st.button("📊 Classic MCQ", help="Original Kirby, Petry & Bickel (1999) settings"):
+                st.session_state.mcq_choice_method = "Classic MCQ (Kirby et al. 1999)"
+                st.rerun()
+        
+        with col_preset2:
+            if st.button("⚖️ Modern Range", help="Contemporary values with extended delays"):
+                st.session_state.mcq_choice_method = "Custom Parameters"
+                st.session_state.imm_min = 20
+                st.session_state.imm_max = 100
+                st.session_state.imm_delay = 0
+                st.session_state.del_min = 30
+                st.session_state.del_max = 300
+                st.session_state.del_delay_min = 7
+                st.session_state.del_delay_max = 365
+                st.rerun()
+        
+        # Generate choice pairs based on method
+        if choice_method == "Custom Parameters":
+            # Create custom choice pairs
+            import numpy as np
+            np.random.seed(42)  # For consistent custom choices
+            
+            custom_choice_pairs = []
+            
+            if delay_distribution == "Custom List":
+                try:
+                    delays = [int(d.strip()) for d in custom_delays.split(",")]
+                    delays = delays[:num_choices]  # Limit to num_choices
+                    if len(delays) < num_choices:
+                        # Repeat delays if needed
+                        delays = (delays * (num_choices // len(delays) + 1))[:num_choices]
+                except:
+                    delays = [7, 14, 30, 60, 90, 120, 180][:num_choices]
+            elif delay_distribution == "Linear":
+                delays = np.linspace(del_delay_min, del_delay_max, num_choices, dtype=int)
+            else:  # Exponential
+                delays = np.logspace(np.log10(del_delay_min), np.log10(del_delay_max), num_choices, dtype=int)
+            
+            for i in range(num_choices):
+                imm_amt = np.random.randint(imm_min, imm_max + 1)
+                del_amt = np.random.randint(max(del_min, imm_amt + 5), del_max + 1)
+                del_delay = int(delays[i]) if i < len(delays) else del_delay_max
+                
+                custom_choice_pairs.append((imm_amt, imm_delay, del_amt, del_delay))
+            
+            choice_pairs_to_use = custom_choice_pairs
+        else:
+            # Use classic MCQ pairs
+            choice_pairs_to_use = None  # Will use default in simulator
+        
+        # Display current choices preview
+        if choice_method == "Custom Parameters":
+            st.write("**Choice Pairs Preview:**")
+            preview_choices = min(5, len(custom_choice_pairs))
+            for i in range(preview_choices):
+                imm_amt, imm_delay, del_amt, del_delay = custom_choice_pairs[i]
+                if imm_delay == 0:
+                    st.write(f"{i+1}. ${imm_amt} now vs ${del_amt} in {del_delay} days")
+                else:
+                    st.write(f"{i+1}. ${imm_amt} in {imm_delay} days vs ${del_amt} in {del_delay} days")
+            if preview_choices < len(custom_choice_pairs):
+                st.write(f"... and {len(custom_choice_pairs) - preview_choices} more choices")
+        else:
+            st.write("**Using Classic MCQ Choices:**")
+            st.write("• $11 now vs $30 in 7 days")
+            st.write("• $25 now vs $60 in 14 days") 
+            st.write("• $54 now vs $80 in 30 days")
+            st.write("• ... and 24 more validated pairs")
         
         if st.button("🚀 Run MCQ Simulation", key="mcq_run"):
             if not personality_weights:
@@ -1025,9 +1136,9 @@ def mcq_test_interface(api_key, temperature, use_api, personality_weights):
                     patience = int(20 + 20 * norm_mix.get('cautious_thinker', 0))
                     params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_mcq')
                 
-                # Run simulation
+                # Run simulation with custom choice pairs
                 simulator = CustomMCQSimulator(
-                    params, num_choices,
+                    params, num_choices, choice_pairs_to_use,
                     rng_seed=int(time.time()) % 2**32
                 )
                 result, history = simulator.run()
@@ -2005,11 +2116,30 @@ def help_guide_interface():
         - **Research**: Based on validated questionnaire from 1999 study
         - **Examples**: "$25 now vs $60 in 14 days", "$11 now vs $30 in 7 days"
         
-        **Task Description:**
-        - **Immediate Rewards**: Smaller amounts available immediately
-        - **Delayed Rewards**: Larger amounts available after waiting period
-        - **Learning**: Agent develops discount rate and temporal preferences
-        - **Measure**: Impulsivity vs self-control in temporal decision-making
+        **Choice Generation Method:**
+        - **Classic MCQ**: Original Kirby, Petry & Bickel (1999) validated choice pairs
+        - **Custom Parameters**: User-defined reward amounts and delay periods
+        
+        **Custom Parameter Controls (when enabled):**
+        - **Immediate Rewards**: Min/max amounts ($1-1000) and delay (0-30 days)
+        - **Delayed Rewards**: Min/max amounts (must exceed immediate) and delay range
+        - **Delay Distribution**: Linear, exponential, or custom comma-separated list
+        - **Real-time Preview**: Shows first 5 generated choice pairs
+        
+        **Quick Presets:**
+        - **Classic MCQ**: Restores original research parameters
+        - **Modern Range**: Contemporary values with extended delays (up to 1 year)
+        
+        **Delay Distribution Options:**
+        - **Linear**: Evenly spaced delays across the range
+        - **Exponential**: More short delays, fewer long delays (realistic)
+        - **Custom List**: Specify exact delay values (e.g., "7, 30, 90, 180")
+        
+        **Task Applications:**
+        - **Research**: Test different temporal discounting scenarios
+        - **Population Studies**: Model specific demographics or conditions
+        - **Parameter Exploration**: Examine how reward/delay ratios affect choices
+        - **Cross-cultural**: Adapt monetary amounts for different economies
         """)
         
         st.subheader("Results Visualization")
