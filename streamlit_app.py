@@ -1471,7 +1471,7 @@ def comparison_interface():
                     - Observe learning curves
                     - Consider risk-taking strategies""")
     
-    else:  # PRLT
+    elif test_type.startswith("PRLT"):  # PRLT
         st.subheader("PRLT Comparison")
         
         col1, col2 = st.columns(2)
