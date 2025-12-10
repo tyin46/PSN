@@ -1237,7 +1237,7 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
             deck_a_gain = st.number_input("Deck A - Reward ($):", min_value=1, max_value=500, value=100, key="deck_a_gain")
             deck_a_loss_prob = st.slider("Deck A - Loss Probability:", 0.0, 1.0, 0.5, 0.05, key="deck_a_loss_prob")
             deck_a_loss_amt = st.number_input("Deck A - Loss Amount ($):", min_value=-2000, max_value=-1, value=-250, key="deck_a_loss_amt")
-            deck_a_expected = deck_a_gain + (deck_a_loss_prob * deck_a_loss_amt)
+            deck_a_expected = deck_a_gain * (1 - deck_a_loss_prob) + (deck_a_gain + deck_a_loss_amt) * deck_a_loss_prob
             st.write(f"Expected value: ${deck_a_expected:.1f}")
         
         # Deck B Configuration
@@ -1245,7 +1245,7 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
             deck_b_gain = st.number_input("Deck B - Reward ($):", min_value=1, max_value=500, value=100, key="deck_b_gain")
             deck_b_loss_prob = st.slider("Deck B - Loss Probability:", 0.0, 1.0, 0.1, 0.05, key="deck_b_loss_prob")
             deck_b_loss_amt = st.number_input("Deck B - Loss Amount ($):", min_value=-2000, max_value=-1, value=-1250, key="deck_b_loss_amt")
-            deck_b_expected = deck_b_gain + (deck_b_loss_prob * deck_b_loss_amt)
+            deck_b_expected = deck_b_gain * (1 - deck_b_loss_prob) + (deck_b_gain + deck_b_loss_amt) * deck_b_loss_prob
             st.write(f"Expected value: ${deck_b_expected:.1f}")
         
         # Deck C Configuration
@@ -1253,7 +1253,7 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
             deck_c_gain = st.number_input("Deck C - Reward ($):", min_value=1, max_value=500, value=50, key="deck_c_gain")
             deck_c_loss_prob = st.slider("Deck C - Loss Probability:", 0.0, 1.0, 0.5, 0.05, key="deck_c_loss_prob")
             deck_c_loss_amt = st.number_input("Deck C - Loss Amount ($):", min_value=-2000, max_value=-1, value=-50, key="deck_c_loss_amt")
-            deck_c_expected = deck_c_gain + (deck_c_loss_prob * deck_c_loss_amt)
+            deck_c_expected = deck_c_gain * (1 - deck_c_loss_prob) + (deck_c_gain + deck_c_loss_amt) * deck_c_loss_prob
             st.write(f"Expected value: ${deck_c_expected:.1f}")
         
         # Deck D Configuration
@@ -1261,7 +1261,7 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
             deck_d_gain = st.number_input("Deck D - Reward ($):", min_value=1, max_value=500, value=50, key="deck_d_gain")
             deck_d_loss_prob = st.slider("Deck D - Loss Probability:", 0.0, 1.0, 0.1, 0.05, key="deck_d_loss_prob")
             deck_d_loss_amt = st.number_input("Deck D - Loss Amount ($):", min_value=-2000, max_value=-1, value=-250, key="deck_d_loss_amt")
-            deck_d_expected = deck_d_gain + (deck_d_loss_prob * deck_d_loss_amt)
+            deck_d_expected = deck_d_gain * (1 - deck_d_loss_prob) + (deck_d_gain + deck_d_loss_amt) * deck_d_loss_prob
             st.write(f"Expected value: ${deck_d_expected:.1f}")
         
         # Quick presets
