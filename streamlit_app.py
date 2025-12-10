@@ -1014,8 +1014,10 @@ def mcq_test_interface(api_key, temperature, use_api, personality_weights):
                 
                 with col_del:
                     st.write("**Delayed Rewards:**")
-                    del_min = st.number_input("Min Delayed Reward ($):", min_value=imm_max+1, max_value=2000, value=25, key="del_min")
-                    del_max = st.number_input("Max Delayed Reward ($):", min_value=del_min+1, max_value=5000, value=200, key="del_max")
+                    del_min_default = max(25, imm_max + 5)  # Ensure delayed min is always higher than immediate max
+                    del_min = st.number_input("Min Delayed Reward ($):", min_value=imm_max+1, max_value=2000, value=del_min_default, key="del_min")
+                    del_max_default = max(200, del_min + 20)  # Ensure delayed max is always higher than delayed min
+                    del_max = st.number_input("Max Delayed Reward ($):", min_value=del_min+1, max_value=5000, value=del_max_default, key="del_max")
                     del_delay_min = st.number_input("Min Delay (days):", min_value=1, max_value=365, value=7, key="del_delay_min")
                     del_delay_max = st.number_input("Max Delay (days):", min_value=del_delay_min+1, max_value=365, value=180, key="del_delay_max")
                 
