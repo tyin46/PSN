@@ -29,6 +29,136 @@ from prlt_personality_proportions import ParamGenerator, AgentParams, PERSONA_FI
 import os
 import tempfile
 
+def format_bart_context(balloon_num, pumps_so_far, history, max_pumps):
+    """Format BART context for LLM decision making"""
+    context = f"""You are participating in a Balloon Analog Risk Task (BART).
+
+Current Situation:
+- Balloon #{balloon_num}
+- Pumps so far: {pumps_so_far}
+- Maximum possible pumps: {max_pumps}
+- Each pump increases the balloon value but also increases explosion risk
+
+Previous Results:"""
+    
+    if history:
+        for h in history[-5:]:  # Show last 5 balloons
+            result = "exploded" if h['exploded'] else "cashed out"
+            context += f"\n- Balloon {h['balloon']}: {h['pumps']} pumps, {result}"
+    else:
+        context += "\n- No previous balloons"
+    
+    context += "\n\nDecision: Should you 'pump' (increase value but risk explosion) or 'cash' (take current value safely)?"
+    context += "\nRespond with exactly one word: 'pump' or 'cash'"
+    
+    return context
+
+def format_prlt_context(trial_num, phase, choice_history, reward_history, QA, QB):
+    """Format PRLT context for LLM decision making"""
+    context = f"""You are participating in a Probabilistic Reversal Learning Task (PRLT).
+
+Current Situation:
+- Trial #{trial_num}
+- Phase: {phase}-reversal
+- You can choose option A or option B
+- Current value estimates: A={QA:.2f}, B={QB:.2f}
+
+Recent History:"""
+    
+    if choice_history:
+        recent_trials = min(10, len(choice_history))
+        for i in range(-recent_trials, 0):
+            choice = choice_history[i]
+            reward = "reward" if reward_history[i] == 1 else "no reward"
+            context += f"\n- Trial {len(choice_history) + i + 1}: chose {choice}, got {reward}"
+    else:
+        context += "\n- No previous trials"
+    
+    context += "\n\nDecision: Which option do you choose?"
+    context += "\nRespond with exactly one letter: 'A' or 'B'"
+    
+    return context
+
+def format_mcq_context(choice_num, immediate_amt, immediate_delay, delayed_amt, delayed_delay, history):
+    """Format MCQ context for LLM decision making"""
+    context = f"""You are participating in a Monetary Choice Questionnaire (MCQ).
+
+Current Choice #{choice_num}:
+- Immediate option: ${immediate_amt} in {immediate_delay} days
+- Delayed option: ${delayed_amt} in {delayed_delay} days
+
+Previous Choices:"""
+    
+    if history:
+        for h in history[-5:]:  # Show last 5 choices
+            context += f"\n- Choice {h['choice_num']}: chose {h['choice']} option"
+    else:
+        context += "\n- No previous choices"
+    
+    context += "\n\nDecision: Which option do you prefer?"
+    context += "\nRespond with exactly one word: 'immediate' or 'delayed'"
+    
+    return context
+
+def format_igt_context(trial_num, deck_history, money_total, Q_values, deck_config):
+    """Format IGT context for LLM decision making"""
+    context = f"""You are participating in the Iowa Gambling Task (IGT).
+
+Current Situation:
+- Trial #{trial_num}
+- Current money: ${money_total}
+- Available decks: A, B, C, D
+
+Deck Performance So Far:"""
+    
+    if deck_history:
+        deck_counts = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+        deck_outcomes = {'A': [], 'B': [], 'C': [], 'D': []}
+        
+        for h in deck_history:
+            deck_counts[h['deck']] += 1
+            deck_outcomes[h['deck']].append(h['net_outcome'])
+        
+        for deck in ['A', 'B', 'C', 'D']:
+            if deck_counts[deck] > 0:
+                avg_outcome = sum(deck_outcomes[deck]) / len(deck_outcomes[deck])
+                context += f"\n- Deck {deck}: {deck_counts[deck]} selections, avg outcome: ${avg_outcome:.1f}"
+            else:
+                context += f"\n- Deck {deck}: not selected yet"
+    else:
+        context += "\n- No previous selections"
+    
+    context += "\n\nRecent Outcomes:"
+    if deck_history:
+        for h in deck_history[-5:]:
+            context += f"\n- Trial {h['trial']}: Deck {h['deck']}, outcome: ${h['net_outcome']}"
+    
+    context += "\n\nDecision: Which deck do you choose?"
+    context += "\nRespond with exactly one letter: 'A', 'B', 'C', or 'D'"
+    
+    return context
+
+def get_llm_decision(context, api_key, temperature=0.3):
+    """Get LLM decision based on context"""
+    try:
+        import openai
+        client = openai.OpenAI(api_key=api_key)
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are participating in a psychological experiment. Make decisions based on the context provided. Follow instructions exactly."},
+                {"role": "user", "content": context}
+            ],
+            temperature=temperature,
+            max_tokens=10
+        )
+        
+        return response.choices[0].message.content.strip().lower()
+    except Exception as e:
+        st.error(f"LLM decision error: {e}")
+        return None
+
 # Configure Streamlit page
 st.set_page_config(
     page_title="Personality Testing Suite",
@@ -812,9 +942,13 @@ def bart_test_interface(api_key, temperature, use_api, personality_weights):
                     
                     # Store results
                     st.session_state.bart_history = history
-                
-                st.success(f"✅ Simulation complete! Avg pumps: {result.avg_pumps:.2f}, "
-                          f"Exploded: {result.exploded_count}/{result.total_balloons}")
+                    
+                    if llm_mode:
+                        st.success(f"✅ LLM Simulation complete! Avg pumps: {avg_pumps:.2f}, "
+                                  f"Exploded: {exploded_count}/{num_balloons}")
+                    else:
+                        st.success(f"✅ Simulation complete! Avg pumps: {result.avg_pumps:.2f}, "
+                                  f"Exploded: {result.exploded_count}/{result.total_balloons}")
     
     with col2:
         st.subheader("Results Visualization")
