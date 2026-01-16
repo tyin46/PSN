@@ -715,53 +715,103 @@ def bart_test_interface(api_key, temperature, use_api, personality_weights):
         explosion_curve = st.slider("Explosion Curve:", 0.2, 2.0, 1.0, 0.1,
                                    help="Higher = balloon explodes faster with more pumps")
         
+        # LLM Decision Mode
+        llm_mode = st.checkbox(
+            "🤖 LLM Decision Mode", 
+            help="Agent makes decisions step-by-step using language model instead of Q-learning algorithm"
+        )
+        
         if st.button("🚀 Run BART Simulation", key="bart_run"):
             if not personality_weights:
                 st.error("Please select at least one personality in the sidebar!")
                 return
                 
             with st.spinner("Running BART simulation..."):
-                # Normalize personality mix
-                total = sum(personality_weights.values())
-                norm_mix = {k: v/total for k, v in personality_weights.items()}
-                
-                # Get parameters
-                personalities = load_personalities()
-                param_gen = get_parameter_generator(api_key, use_api, personalities)
-                
-                if use_api and api_key:
-                    try:
-                        params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
-                    except Exception as e:
-                        st.error(f"API Error: {e}")
+                if llm_mode:
+                    # LLM-driven simulation
+                    if not api_key:
+                        st.error("LLM Decision Mode requires an OpenAI API key.")
                         return
+                    
+                    history = []
+                    for balloon_num in range(1, num_balloons + 1):
+                        pumps = 0
+                        exploded = False
+                        
+                        while pumps < max_pumps:
+                            # Get LLM decision
+                            context = format_bart_context(balloon_num, pumps, history, max_pumps)
+                            decision = get_llm_decision(context, api_key, temperature)
+                            
+                            if decision in ['cash', 'cash out', 'take']:
+                                break
+                            elif decision in ['pump', 'continue', 'risk']:
+                                pumps += 1
+                                # Check for explosion
+                                explosion_prob = min(0.999, (pumps / float(max_pumps)) ** explosion_curve)
+                                if np.random.random() < explosion_prob:
+                                    exploded = True
+                                    break
+                            else:
+                                # Default to cash if unclear response
+                                break
+                        
+                        history.append({
+                            'balloon': balloon_num,
+                            'pumps': pumps,
+                            'exploded': exploded,
+                            'Q_pump': 0.0,  # Not used in LLM mode
+                            'Q_cash': 0.0   # Not used in LLM mode
+                        })
+                    
+                    avg_pumps = float(np.mean([h['pumps'] for h in history])) if history else 0.0
+                    exploded_count = sum(1 for h in history if h['exploded'])
+                    st.session_state.bart_history = history
+                    st.success(f"LLM Simulation complete! Average pumps: {avg_pumps:.1f}, Explosions: {exploded_count}/{num_balloons}")
+                    
                 else:
-                    # Enhanced heuristic fallback for BART
-                    # More aggressive defaults to encourage pumping
-                    base_lr = 0.3 + 0.4 * norm_mix.get('risk_taker', 0) + 0.3 * norm_mix.get('bold_pumper', 0)
-                    base_eps = 0.1 * (1 - norm_mix.get('risk_taker', 0) - norm_mix.get('bold_pumper', 0))
-                    base_pers = 0.1 + 0.4 * norm_mix.get('cautious_thinker', 0)
+                    # Traditional Q-learning simulation
+                    # Normalize personality mix
+                    total = sum(personality_weights.values())
+                    norm_mix = {k: v/total for k, v in personality_weights.items()}
                     
-                    # Moderate pumper influence
-                    if 'moderate_pumper' in norm_mix:
-                        base_lr += 0.2 * norm_mix['moderate_pumper']
-                        base_eps += 0.15 * norm_mix['moderate_pumper']
+                    # Get parameters
+                    personalities = load_personalities()
+                    param_gen = get_parameter_generator(api_key, use_api, personalities)
                     
-                    lr = min(0.9, base_lr)  # Cap at 0.9
-                    eps = min(0.5, max(0.05, base_eps))  # Keep between 0.05-0.5
-                    pers = min(0.5, base_pers)  # Cap at 0.5
-                    patience = int(5 + 15 * norm_mix.get('cautious_thinker', 0))
-                    params = AgentParams(lr, eps, pers, 0.05, patience, rationale='enhanced_heuristic')
-                
-                # Run simulation
-                simulator = CustomBARTSimulator(
-                    params, num_balloons, max_pumps, explosion_curve, 
-                    rng_seed=int(time.time()) % 2**32
-                )
-                result, history = simulator.run()
-                
-                # Store results
-                st.session_state.bart_history = history
+                    if use_api and api_key:
+                        try:
+                            params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
+                        except Exception as e:
+                            st.error(f"API Error: {e}")
+                            return
+                    else:
+                        # Enhanced heuristic fallback for BART
+                        # More aggressive defaults to encourage pumping
+                        base_lr = 0.3 + 0.4 * norm_mix.get('risk_taker', 0) + 0.3 * norm_mix.get('bold_pumper', 0)
+                        base_eps = 0.1 * (1 - norm_mix.get('risk_taker', 0) - norm_mix.get('bold_pumper', 0))
+                        base_pers = 0.1 + 0.4 * norm_mix.get('cautious_thinker', 0)
+                        
+                        # Moderate pumper influence
+                        if 'moderate_pumper' in norm_mix:
+                            base_lr += 0.2 * norm_mix['moderate_pumper']
+                            base_eps += 0.15 * norm_mix['moderate_pumper']
+                        
+                        lr = min(0.9, base_lr)  # Cap at 0.9
+                        eps = min(0.5, max(0.05, base_eps))  # Keep between 0.05-0.5
+                        pers = min(0.5, base_pers)  # Cap at 0.5
+                        patience = int(5 + 15 * norm_mix.get('cautious_thinker', 0))
+                        params = AgentParams(lr, eps, pers, 0.05, patience, rationale='enhanced_heuristic')
+                    
+                    # Run simulation
+                    simulator = CustomBARTSimulator(
+                        params, num_balloons, max_pumps, explosion_curve, 
+                        rng_seed=int(time.time()) % 2**32
+                    )
+                    result, history = simulator.run()
+                    
+                    # Store results
+                    st.session_state.bart_history = history
                 
                 st.success(f"✅ Simulation complete! Avg pumps: {result.avg_pumps:.2f}, "
                           f"Exploded: {result.exploded_count}/{result.total_balloons}")
@@ -857,46 +907,119 @@ def prlt_test_interface(api_key, temperature, use_api, personality_weights):
         
         pre_trials = st.slider("Pre-reversal trials:", 50, 500, 200)
         
+        # LLM Decision Mode
+        llm_mode_prlt = st.checkbox(
+            "🤖 LLM Decision Mode", 
+            key="prlt_llm",
+            help="Agent makes decisions step-by-step using language model instead of Q-learning algorithm"
+        )
+        
         if st.button("🚀 Run PRLT Simulation", key="prlt_run"):
             if not personality_weights:
                 st.error("Please select at least one personality in the sidebar!")
                 return
                 
             with st.spinner("Running PRLT simulation..."):
-                # Normalize personality mix
-                total = sum(personality_weights.values())
-                norm_mix = {k: v/total for k, v in personality_weights.items()}
-                
-                # Get parameters
-                personalities = load_personalities()
-                param_gen = get_parameter_generator(api_key, use_api, personalities)
-                
-                if use_api and api_key:
-                    try:
-                        params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
-                    except Exception as e:
-                        st.error(f"API Error: {e}")
+                if llm_mode_prlt:
+                    # LLM-driven simulation
+                    if not api_key:
+                        st.error("LLM Decision Mode requires an OpenAI API key.")
                         return
+                    
+                    QA, QB = 0.5, 0.5
+                    choice_history = []
+                    reward_history = []
+                    trial_history = []
+                    
+                    # Pre-reversal phase
+                    for trial in range(1, pre_trials + 1):
+                        context = format_prlt_context(trial, "pre", choice_history, reward_history, QA, QB)
+                        decision = get_llm_decision(context, api_key, temperature)
+                        
+                        choice = 'A' if decision.upper() in ['A', 'OPTION A', 'CHOICE A'] else 'B'
+                        reward = 1 if np.random.random() < (pA_pre if choice == 'A' else pB_pre) else 0
+                        
+                        # Update Q-values for display
+                        if choice == 'A':
+                            QA = QA + 0.1 * (reward - QA)
+                        else:
+                            QB = QB + 0.1 * (reward - QB)
+                        
+                        choice_history.append(choice)
+                        reward_history.append(reward)
+                        trial_history.append({
+                            'phase': 'pre', 'trial': trial, 'choice': choice,
+                            'reward': reward, 'QA': QA, 'QB': QB
+                        })
+                    
+                    # Post-reversal phase
+                    for trial in range(1, 201):  # Max 200 post-reversal trials
+                        t_index = pre_trials + trial
+                        context = format_prlt_context(t_index, "post", choice_history, reward_history, QA, QB)
+                        decision = get_llm_decision(context, api_key, temperature)
+                        
+                        choice = 'A' if decision.upper() in ['A', 'OPTION A', 'CHOICE A'] else 'B'
+                        reward = 1 if np.random.random() < (pA_post if choice == 'A' else pB_post) else 0
+                        
+                        # Update Q-values for display
+                        if choice == 'A':
+                            QA = QA + 0.1 * (reward - QA)
+                        else:
+                            QB = QB + 0.1 * (reward - QB)
+                        
+                        choice_history.append(choice)
+                        reward_history.append(reward)
+                        trial_history.append({
+                            'phase': 'post', 'trial': t_index, 'choice': choice,
+                            'reward': reward, 'QA': QA, 'QB': QB
+                        })
+                        
+                        # Check convergence to new optimal choice
+                        if len(choice_history) >= 20:
+                            correct_choice = 'B' if pA_post < pB_post else 'A'
+                            recent_choices = choice_history[-20:]
+                            if sum(1 for c in recent_choices if c == correct_choice) >= 18:  # 90% correct
+                                break
+                    
+                    st.session_state.prlt_history = trial_history
+                    st.success(f"LLM PRLT complete! Total trials: {len(trial_history)}")
+                    
                 else:
-                    # Heuristic fallback for PRLT
-                    lr = 0.1 + 0.4 * norm_mix.get('risk_taker', 0)
-                    eps = 0.15 + 0.4 * (1 - norm_mix.get('cautious_thinker', 0))
-                    pers = 0.05 + 0.4 * norm_mix.get('cautious_thinker', 0)
-                    patience = int(10 + 30 * norm_mix.get('cautious_thinker', 0))
-                    params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic')
-                
-                # Run simulation
-                simulator = CustomPRLTSimulator(
-                    params, pA_pre, pB_pre, pA_post, pB_post,
-                    rng_seed=int(time.time()) % 2**32
-                )
-                result, history = simulator.run(pre_trials)
-                
-                # Store results
-                st.session_state.prlt_history = history
-                
-                st.success(f"✅ Simulation complete! Pre-converge: {result.pre_rev_trials_to_converge} trials, "
-                          f"Post-switch: {result.post_rev_trials_to_switch} trials")
+                    # Traditional Q-learning simulation
+                    # Normalize personality mix
+                    total = sum(personality_weights.values())
+                    norm_mix = {k: v/total for k, v in personality_weights.items()}
+                    
+                    # Get parameters
+                    personalities = load_personalities()
+                    param_gen = get_parameter_generator(api_key, use_api, personalities)
+                    
+                    if use_api and api_key:
+                        try:
+                            params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
+                        except Exception as e:
+                            st.error(f"API Error: {e}")
+                            return
+                    else:
+                        # Heuristic fallback for PRLT
+                        lr = 0.1 + 0.4 * norm_mix.get('risk_taker', 0)
+                        eps = 0.15 + 0.4 * (1 - norm_mix.get('cautious_thinker', 0))
+                        pers = 0.05 + 0.4 * norm_mix.get('cautious_thinker', 0)
+                        patience = int(10 + 30 * norm_mix.get('cautious_thinker', 0))
+                        params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic')
+                    
+                    # Run simulation
+                    simulator = CustomPRLTSimulator(
+                        params, pA_pre, pB_pre, pA_post, pB_post,
+                        rng_seed=int(time.time()) % 2**32
+                    )
+                    result, history = simulator.run(pre_trials)
+                    
+                    # Store results
+                    st.session_state.prlt_history = history
+                    
+                    st.success(f"✅ Simulation complete! Pre-converge: {result.pre_rev_trials_to_converge} trials, "
+                              f"Post-switch: {result.post_rev_trials_to_switch} trials")
     
     with col2:
         st.subheader("Results Visualization")
@@ -1110,47 +1233,96 @@ def mcq_test_interface(api_key, temperature, use_api, personality_weights):
             st.write("• $54 now vs $80 in 30 days")
             st.write("• ... and 24 more validated pairs")
         
+        # LLM Decision Mode
+        llm_mode_mcq = st.checkbox(
+            "🤖 LLM Decision Mode", 
+            key="mcq_llm",
+            help="Agent makes decisions step-by-step using language model instead of Q-learning algorithm"
+        )
+        
         if st.button("🚀 Run MCQ Simulation", key="mcq_run"):
             if not personality_weights:
                 st.error("Please select at least one personality in the sidebar!")
                 return
                 
             with st.spinner("Running MCQ simulation..."):
-                # Normalize personality mix
-                total = sum(personality_weights.values())
-                norm_mix = {k: v/total for k, v in personality_weights.items()}
-                
-                # Get parameters
-                personalities = load_personalities()
-                param_gen = get_parameter_generator(api_key, use_api, personalities)
-                
-                if use_api and api_key:
-                    try:
-                        params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
-                    except Exception as e:
-                        st.error(f"API Error: {e}")
+                if llm_mode_mcq:
+                    # LLM-driven simulation
+                    if not api_key:
+                        st.error("LLM Decision Mode requires an OpenAI API key.")
                         return
+                    
+                    history = []
+                    Q_immediate = 0.5
+                    Q_delayed = 0.5
+                    
+                    # Use appropriate choice pairs
+                    for i, (imm_amt, imm_delay, del_amt, del_delay) in enumerate(choice_pairs_to_use):
+                        context = format_mcq_context(i+1, imm_amt, imm_delay, del_amt, del_delay, history)
+                        decision = get_llm_decision(context, api_key, temperature)
+                        
+                        choice = 'immediate' if decision in ['immediate', 'now', 'sooner', 'imm'] else 'delayed'
+                        
+                        # Update Q-values for tracking
+                        if choice == 'immediate':
+                            Q_immediate = Q_immediate + 0.1 * (1.0 - Q_immediate)
+                        else:
+                            Q_delayed = Q_delayed + 0.1 * (1.0 - Q_delayed)
+                        
+                        history.append({
+                            'choice_num': i + 1,
+                            'immediate_amount': imm_amt,
+                            'immediate_delay': imm_delay,
+                            'delayed_amount': del_amt,
+                            'delayed_delay': del_delay,
+                            'choice': choice,
+                            'Q_immediate': Q_immediate,
+                            'Q_delayed': Q_delayed,
+                            'k_estimate': 0.1  # Default estimate for LLM mode
+                        })
+                    
+                    immediate_count = sum(1 for h in history if h['choice'] == 'immediate')
+                    delayed_count = len(history) - immediate_count
+                    st.session_state.mcq_history = history
+                    st.success(f"LLM MCQ complete! Immediate choices: {immediate_count}, Delayed choices: {delayed_count}")
+                    
                 else:
-                    # Heuristic fallback for MCQ
-                    lr = 0.05 + 0.3 * norm_mix.get('risk_taker', 0)  # Higher LR = more impulsive
-                    eps = 0.1 + 0.3 * norm_mix.get('risk_taker', 0)
-                    pers = 0.1 + 0.3 * norm_mix.get('cautious_thinker', 0)
-                    patience = int(20 + 20 * norm_mix.get('cautious_thinker', 0))
-                    params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_mcq')
-                
-                # Run simulation with custom choice pairs
-                simulator = CustomMCQSimulator(
-                    params, num_choices, choice_pairs_to_use,
-                    rng_seed=int(time.time()) % 2**32
-                )
-                result, history = simulator.run()
-                
-                # Store results
-                st.session_state.mcq_history = history
-                
-                st.success(f"✅ Simulation complete! "
-                          f"Immediate: {result.immediate_count}/{result.total_choices}, "
-                          f"Delayed: {result.delayed_count}/{result.total_choices}")
+                    # Traditional Q-learning simulation
+                    # Normalize personality mix
+                    total = sum(personality_weights.values())
+                    norm_mix = {k: v/total for k, v in personality_weights.items()}
+                    
+                    # Get parameters
+                    personalities = load_personalities()
+                    param_gen = get_parameter_generator(api_key, use_api, personalities)
+                    
+                    if use_api and api_key:
+                        try:
+                            params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
+                        except Exception as e:
+                            st.error(f"API Error: {e}")
+                            return
+                    else:
+                        # Heuristic fallback for MCQ
+                        lr = 0.05 + 0.3 * norm_mix.get('risk_taker', 0)  # Higher LR = more impulsive
+                        eps = 0.1 + 0.3 * norm_mix.get('risk_taker', 0)
+                        pers = 0.1 + 0.3 * norm_mix.get('cautious_thinker', 0)
+                        patience = int(20 + 20 * norm_mix.get('cautious_thinker', 0))
+                        params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_mcq')
+                    
+                    # Run simulation with custom choice pairs
+                    simulator = CustomMCQSimulator(
+                        params, num_choices, choice_pairs_to_use,
+                        rng_seed=int(time.time()) % 2**32
+                    )
+                    result, history = simulator.run()
+                    
+                    # Store results
+                    st.session_state.mcq_history = history
+                    
+                    st.success(f"✅ Simulation complete! "
+                              f"Immediate: {result.immediate_count}/{result.total_choices}, "
+                              f"Delayed: {result.delayed_count}/{result.total_choices}")
     
     with col2:
         st.subheader("Results Visualization")
@@ -1314,47 +1486,115 @@ def igt_test_interface(api_key, temperature, use_api, personality_weights):
             advantageous = "✅" if deck_info['net_expected'] > 0 else "❌"
             st.write(f"**Deck {deck_name}**: {advantageous} +${deck_info['gain']}, {deck_info['loss_prob']:.1%} chance ${deck_info['loss_amt']:.0f} (EV: ${deck_info['net_expected']:.1f})")
         
+        # LLM Decision Mode
+        llm_mode_igt = st.checkbox(
+            "🤖 LLM Decision Mode", 
+            key="igt_llm",
+            help="Agent makes decisions step-by-step using language model instead of Q-learning algorithm"
+        )
+        
         if st.button("🚀 Run IGT Simulation", key="igt_run"):
             if not personality_weights:
                 st.error("Please select at least one personality in the sidebar!")
                 return
                 
             with st.spinner("Running IGT simulation..."):
-                # Normalize personality mix
-                total = sum(personality_weights.values())
-                norm_mix = {k: v/total for k, v in personality_weights.items()}
-                
-                # Get parameters
-                personalities = load_personalities()
-                param_gen = get_parameter_generator(api_key, use_api, personalities)
-                
-                if use_api and api_key:
-                    try:
-                        params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
-                    except Exception as e:
-                        st.error(f"API Error: {e}")
+                if llm_mode_igt:
+                    # LLM-driven simulation
+                    if not api_key:
+                        st.error("LLM Decision Mode requires an OpenAI API key.")
                         return
+                    
+                    Q_values = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}
+                    history = []
+                    total_money = 2000  # Starting amount
+                    
+                    for trial in range(1, num_trials + 1):
+                        context = format_igt_context(trial, history, total_money, Q_values, custom_decks)
+                        decision = get_llm_decision(context, api_key, temperature)
+                        
+                        # Parse deck choice
+                        chosen_deck = 'A'
+                        if decision.upper() in ['B', 'DECK B']:
+                            chosen_deck = 'B'
+                        elif decision.upper() in ['C', 'DECK C']:
+                            chosen_deck = 'C'
+                        elif decision.upper() in ['D', 'DECK D']:
+                            chosen_deck = 'D'
+                        elif decision.upper() in ['A', 'DECK A']:
+                            chosen_deck = 'A'
+                        
+                        # Get outcome from chosen deck
+                        deck_info = custom_decks[chosen_deck]
+                        gain = deck_info['gain']
+                        
+                        # Determine if loss occurs
+                        if np.random.random() < deck_info['loss_prob']:
+                            loss = deck_info['loss_amt']
+                        else:
+                            loss = 0
+                        
+                        net_outcome = gain + loss
+                        total_money += net_outcome
+                        
+                        # Update Q-value for chosen deck
+                        Q_values[chosen_deck] += 0.1 * (net_outcome - Q_values[chosen_deck])
+                        
+                        # Record trial
+                        history.append({
+                            'trial': trial,
+                            'deck': chosen_deck,
+                            'gain': gain,
+                            'loss': loss,
+                            'net_outcome': net_outcome,
+                            'total_money': total_money,
+                            'Q_A': Q_values['A'],
+                            'Q_B': Q_values['B'],
+                            'Q_C': Q_values['C'],
+                            'Q_D': Q_values['D']
+                        })
+                    
+                    advantageous = sum(1 for h in history if h['deck'] in ['C', 'D'])
+                    st.session_state.igt_history = history
+                    st.success(f"LLM IGT complete! Final money: ${total_money}, Advantageous choices: {advantageous}/{num_trials}")
+                    
                 else:
-                    # Heuristic fallback for IGT
-                    lr = 0.1 + 0.4 * norm_mix.get('risk_taker', 0)
-                    eps = 0.15 + 0.3 * norm_mix.get('risk_taker', 0)
-                    pers = 0.1 + 0.3 * norm_mix.get('cautious_thinker', 0)
-                    patience = int(10 + 20 * norm_mix.get('cautious_thinker', 0))
-                    params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_igt')
-                
-                # Run simulation with custom decks
-                simulator = CustomIGTSimulator(
-                    params, num_trials, custom_decks,
-                    rng_seed=int(time.time()) % 2**32
-                )
-                result, history = simulator.run()
-                
-                # Store results
-                st.session_state.igt_history = history
-                
-                st.success(f"✅ Simulation complete! "
-                          f"Final money: ${result.final_money:.0f}, "
-                          f"Good choices: {result.advantageous_choices}/{result.total_trials}")
+                    # Traditional Q-learning simulation
+                    # Normalize personality mix
+                    total = sum(personality_weights.values())
+                    norm_mix = {k: v/total for k, v in personality_weights.items()}
+                    
+                    # Get parameters
+                    personalities = load_personalities()
+                    param_gen = get_parameter_generator(api_key, use_api, personalities)
+                    
+                    if use_api and api_key:
+                        try:
+                            params = param_gen.get_params_from_llm(norm_mix, temperature=temperature)
+                        except Exception as e:
+                            st.error(f"API Error: {e}")
+                            return
+                    else:
+                        # Heuristic fallback for IGT
+                        lr = 0.1 + 0.4 * norm_mix.get('risk_taker', 0)
+                        eps = 0.15 + 0.3 * norm_mix.get('risk_taker', 0)
+                        pers = 0.1 + 0.3 * norm_mix.get('cautious_thinker', 0)
+                        patience = int(10 + 20 * norm_mix.get('cautious_thinker', 0))
+                        params = AgentParams(lr, eps, pers, 0.05, patience, rationale='heuristic_igt')
+                    
+                    # Run simulation with custom decks
+                    simulator = CustomIGTSimulator(
+                        params, num_trials, custom_decks,
+                        rng_seed=int(time.time()) % 2**32
+                    )
+                    result, history = simulator.run()
+                    
+                    # Store results
+                    st.session_state.igt_history = history
+                    
+                    st.success(f"✅ Simulation complete! "
+                              f"Final money: ${result.final_money:.0f}, "
+                              f"Good choices: {result.advantageous_choices}/{result.total_trials}")
     
     with col2:
         st.subheader("Results Visualization")
